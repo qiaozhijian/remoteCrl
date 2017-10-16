@@ -114,6 +114,21 @@ public class controlUI extends Activity implements View.OnClickListener{
         }
     }
     /**
+     * @Title: init
+     * @Description: TODO(初始化UI控件)
+     * @param
+     * @return void
+     * @throws
+     */
+    private void init()
+    {
+        setContentView(R.layout.ctrui);
+        connect_state = (TextView) this.findViewById(R.id.connect_state_ctr);
+        connect_state.setText(status);
+        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);//强制为横屏
+        initView();
+    }
+    /**
      * 初始化视图组件
      */
     private void initView() {
@@ -136,21 +151,6 @@ public class controlUI extends Activity implements View.OnClickListener{
                         textView_02.setText("角度：" + angle + "\n" +  "距离：" + distance);
                     }
                 }, 100L);
-    }
-    /**
-     * @Title: init
-     * @Description: TODO(初始化UI控件)
-     * @param
-     * @return void
-     * @throws
-     */
-    private void init()
-    {
-        connect_state = (TextView) this.findViewById(R.id.connect_state);
-        connect_state.setText(status);
-        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);//强制为横屏
-        setContentView(R.layout.activity_main);
-        initView();
     }
 
     /* BluetoothLeService绑定的回调函数 */

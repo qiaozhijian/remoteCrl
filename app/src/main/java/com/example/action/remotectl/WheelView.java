@@ -10,13 +10,13 @@ import android.view.MotionEvent;
 import android.view.View;
 
 /**
+ * @author _Andy
  * @version 1.0.0
- * @date    2017年6月8日 下午1:55:59
- * @author  _Andy
+ * @date 2017年6月8日 下午1:55:59
  * @类说明 自定义全角度方向盘控制控件
  */
 @SuppressLint("ClickableViewAccessibility")
-public class WheelView extends View implements View.OnTouchListener{
+public class WheelView extends View implements View.OnTouchListener {
 
     public WheelView(Context context) {
         super(context);
@@ -33,20 +33,34 @@ public class WheelView extends View implements View.OnTouchListener{
         initWheelView();
     }
 
-    /** 控件中心点的X坐标 */
+    /**
+     * 控件中心点的X坐标
+     */
     public double centerX = 0.0D;
-    /** 控件中心点的Y坐标 */
+    /**
+     * 控件中心点的Y坐标
+     */
     public double centerY = 0.0D;
-    /** 控件的半径 */
+    /**
+     * 控件的半径
+     */
     private int joystickRadius;
 
-    /** 整个控件的大圆的画笔 */
+    /**
+     * 整个控件的大圆的画笔
+     */
     private Paint mainCircle;
-    /** 第二个内圆的画笔 */
+    /**
+     * 第二个内圆的画笔
+     */
     private Paint secondaryCircle;
-    /** 垂直线的画笔 */
+    /**
+     * 垂直线的画笔
+     */
     private Paint verticalLine;
-    /** 水平线的画笔 */
+    /**
+     * 水平线的画笔
+     */
     private Paint horizontalLine;
 
 
@@ -86,7 +100,9 @@ public class WheelView extends View implements View.OnTouchListener{
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
     }
 
-    /** 测量宽高的方法 */
+    /**
+     * 测量宽高的方法
+     */
     private int measure(int paramInt) {
         int i = View.MeasureSpec.getMode(paramInt);
         int j = View.MeasureSpec.getSize(paramInt);
@@ -95,13 +111,15 @@ public class WheelView extends View implements View.OnTouchListener{
         return j;
     }
 
-    /** 重写View中的绘制方法*/
+    /**
+     * 重写View中的绘制方法
+     */
     @Override
     protected void onDraw(Canvas canvas) {
         //获取控件的宽高并取一半作为中心点坐标
         this.centerX = (getWidth() / 2);
         this.centerY = (getHeight() / 2);
-        this.joystickRadius = Math.min((int)this.centerX, (int)this.centerY) - 3;
+        this.joystickRadius = Math.min((int) this.centerX, (int) this.centerY) - 3;
 
 //        canvas.drawColor(Color.YELLOW);//画背景色
 //        paint.setUnderlineText(true);//设置文字带下划线
@@ -138,11 +156,14 @@ public class WheelView extends View implements View.OnTouchListener{
 
 //****************************分割线**************************************//
 
-    /** 自定义的接口用于监听处理控件的触摸事件 */
+    /**
+     * 自定义的接口用于监听处理控件的触摸事件
+     */
     private OnWheelViewMoveListener onWheelViewMoveListener;
 
     /**
      * 为接口设置监听器
+     *
      * @param listener  回调
      * @param paramLong 监听时间间隔
      */
@@ -154,30 +175,43 @@ public class WheelView extends View implements View.OnTouchListener{
 
     /**
      * 为接口设置监听器,默认时间间隔
-     * @param listener  回调
+     *
+     * @param listener 回调
      */
     public void setOnWheelViewMoveListener(
             OnWheelViewMoveListener listener) {
         this.onWheelViewMoveListener = listener;
     }
 
-    /** 手指点击的位置X坐标 */
+    /**
+     * 手指点击的位置X坐标
+     */
     private int position_X = 0;
-    /** 手指点击的位置Y坐标 */
+    /**
+     * 手指点击的位置Y坐标
+     */
     private int position_Y = 0;
-    /** 当前手指位置所在的角度 */
+    /**
+     * 当前手指位置所在的角度
+     */
     private int lastAngle = 0;
-    /** 当前手指位置与中心的距离 */
+    /**
+     * 当前手指位置与中心的距离
+     */
     private int lastDistance = 0;
 
-    /** 实现事件监听 */
+    /**
+     * 实现事件监听
+     */
     @Override
     public boolean onTouch(View v, MotionEvent event) {
         /* 处理(消费掉)这个控件的事件监听 */
         return true;
     }
 
-    /** 处理监听事件 */
+    /**
+     * 处理监听事件
+     */
     @SuppressLint("ClickableViewAccessibility")
     @Override
     public boolean onTouchEvent(MotionEvent event) {
@@ -218,7 +252,9 @@ public class WheelView extends View implements View.OnTouchListener{
         return super.onTouchEvent(event);
     }
 
-    /** 根据所处的位置计算得到角度 */
+    /**
+     * 根据所处的位置计算得到角度
+     */
     private int getAngle() {
         if (this.position_X > this.centerX) {
             if (this.position_Y < this.centerY) {//右上角，第一象限
@@ -268,20 +304,28 @@ public class WheelView extends View implements View.OnTouchListener{
         return 180;
     }
 
-    /** 得到所处位置与中心的距离(百分比) */
+    /**
+     * 得到所处位置与中心的距离(百分比)
+     */
     private int getDistance() {
-        this.lastDistance=(int) (100.0D * Math.sqrt(
+        this.lastDistance = (int) (100.0D * Math.sqrt(
                 Math.pow(this.position_X - this.centerX, 2) +
                         Math.pow(this.position_Y - this.centerY, 2)
         ) / this.joystickRadius);
         return lastDistance;
     }
 
-    /** 监听时间间隔，默认为100毫秒 */
+    /**
+     * 监听时间间隔，默认为100毫秒
+     */
     private static long loopInterval = 100L;
-    /** 手指按下之后的循环监听线程 */
+    /**
+     * 手指按下之后的循环监听线程
+     */
     private Thread thread;
-    /** 事件监听线程的实现 */
+    /**
+     * 事件监听线程的实现
+     */
     private Runnable runnable = new Runnable() {
         @Override
         public void run() {
@@ -305,16 +349,17 @@ public class WheelView extends View implements View.OnTouchListener{
     };
 
     /**
+     * @author _Andy
      * @version 1.0.0
-     * @date    2017年6月9日 上午10:57:49
-     * @author  _Andy
+     * @date 2017年6月9日 上午10:57:49
      * @类说明 自定义事件监听的接口
      */
     public abstract interface OnWheelViewMoveListener {
         /**
          * 接口回调函数
-         * @param angle     角度
-         * @param distance  距离
+         *
+         * @param angle    角度
+         * @param distance 距离
          */
         public abstract void onValueChanged(int angle, int distance);
     }
