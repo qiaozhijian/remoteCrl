@@ -95,11 +95,11 @@ public class MainActivity extends Activity implements View.OnClickListener {
                 if (device == null)
                     return;
                 final Intent intent = new Intent(MainActivity.this,
-                        Ble_Activity.class);
+                        controlUI.class);
 //                传递信息
-                intent.putExtra(Ble_Activity.EXTRAS_DEVICE_NAME, device.getName());
-                intent.putExtra(Ble_Activity.EXTRAS_DEVICE_ADDRESS, device.getAddress());
-                intent.putExtra(Ble_Activity.EXTRAS_DEVICE_RSSI, rssis.get(position).toString());
+                intent.putExtra(controlUI.EXTRAS_DEVICE_NAME, device.getName());
+                intent.putExtra(controlUI.EXTRAS_DEVICE_ADDRESS, device.getAddress());
+                intent.putExtra(controlUI.EXTRAS_DEVICE_RSSI, rssis.get(position).toString());
 
                 if (mScanning) {
                     /* 停止扫描设备 */
