@@ -1,5 +1,6 @@
 package com.example.action.remotectl;
 
+import android.Manifest;
 import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
@@ -10,10 +11,16 @@ import android.bluetooth.le.ScanResult;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.location.LocationManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.provider.Settings;
+import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
@@ -32,9 +39,10 @@ import android.widget.Toast;
 import java.util.ArrayList;
 
 /**
-/**
- * @Description: TODO<MainActivity类实现打开蓝牙、扫描蓝牙>
+ * /**
+ *
  * @author 广州汇承信息科技有限公司
+ * @Description: TODO<MainActivity类实现打开蓝牙、扫描蓝牙>
  * @data: 2014-10-12 上午10:28:18
  * @version: V1.0
  */
@@ -56,6 +64,9 @@ public class MainActivity extends Activity implements View.OnClickListener {
     private boolean scan_flag;
     private Handler mHandler;
     int REQUEST_ENABLE_BT = 1;
+    private static final int REQUEST_CODE_ACCESS_COARSE_LOCATION = 1;
+    private static final int REQUEST_CODE_LOCATION_SETTINGS = 2;
+    String TAG="bletrack";
     // 蓝牙扫描时间
     private static final long SCAN_PERIOD = 10000;
 
@@ -63,10 +74,9 @@ public class MainActivity extends Activity implements View.OnClickListener {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        // 初始化控件
         init();
-        // 初始化蓝牙
         init_ble();
+        locationInit();
         scan_flag = true;
         // 自定义适配器
         mleDeviceListAdapter = new LeDeviceListAdapter();
@@ -100,10 +110,10 @@ public class MainActivity extends Activity implements View.OnClickListener {
                 try {
                     // 启动Ble_Activity
                     startActivity(intent);
-                    Log.d("bletrack","start success");
+                    Log.d(TAG, "start success");
                 } catch (Exception e) {
                     e.printStackTrace();
-                    Log.d("bletrack","start fail");
+                    Log.d(TAG, "start fail");
                     // TODO: handle exception
                 }
             }
@@ -112,11 +122,11 @@ public class MainActivity extends Activity implements View.OnClickListener {
     }
 
     /**
-     * @Title: init
-     * @Description: TODO(初始化UI控件)
      * @param
      * @return void
      * @throws
+     * @Title: init
+     * @Description: TODO(初始化UI控件)
      */
     private void init() {
         scan_btn = (Button) this.findViewById(R.id.scan_dev_btn);
@@ -124,13 +134,70 @@ public class MainActivity extends Activity implements View.OnClickListener {
         lv = (ListView) this.findViewById(R.id.lv);
         mHandler = new Handler();
     }
+    private void locationInit(){
 
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {//如果 API level 是大于等于 23(Android 6.0) 时
+            //判断是否具有权限
+            if (ContextCompat.checkSelfPermission(this,
+                    Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                //判断是否需要向用户解释为什么需要申请该权限
+                if (ActivityCompat.shouldShowRequestPermissionRationale(this,
+                        Manifest.permission.ACCESS_COARSE_LOCATION)) {
+
+                    showToast("自Android 6.0开始需要打开位置权限才可以搜索到Ble设备");
+                }
+                //请求权限
+                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_COARSE_LOCATION}, REQUEST_CODE_ACCESS_COARSE_LOCATION);
+            }
+        }
+    }
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        if (requestCode == REQUEST_CODE_ACCESS_COARSE_LOCATION) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                //用户允许改权限，0表示允许，-1表示拒绝 PERMISSION_GRANTED = 0， PERMISSION_DENIED = -1
+                //permission was granted, yay! Do the contacts-related task you need to do.
+                //这里进行授权被允许的处理
+            } else {
+                //permission denied, boo! Disable the functionality that depends on this permission.
+                //这里进行权限被拒绝的处理
+            }
+        } else {
+            super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        }
+    }
     /**
-     * @Title: init_ble
-     * @Description: TODO(初始化蓝牙)
+     * Location service if enable
+     *
+     * @param context
+     * @return location is enable if return true, otherwise disable.
+     */
+    public static final boolean isLocationEnable(Context context) {
+        LocationManager locationManager = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
+        boolean networkProvider = locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER);
+        boolean gpsProvider = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
+        if (networkProvider || gpsProvider) return true;
+        return false;
+    }
+    private void setLocationService() {
+        Intent locationIntent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
+        this.startActivityForResult(locationIntent, REQUEST_CODE_LOCATION_SETTINGS);
+    }
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == REQUEST_CODE_LOCATION_SETTINGS) {
+            if (isLocationEnable(this)) {
+                scanLeDevice(true);
+            } else {
+                //定位依然没有打开的处理
+            }
+        } else super.onActivityResult(requestCode, resultCode, data);
+    }
+    /**
      * @param
      * @return void
      * @throws
+     * @Title: init_ble
+     * @Description: TODO(初始化蓝牙)
      */
     private void init_ble() {
         // 手机硬件支持蓝牙
@@ -148,8 +215,10 @@ public class MainActivity extends Activity implements View.OnClickListener {
             Intent enableBtIntent = new Intent(
                     BluetoothAdapter.ACTION_REQUEST_ENABLE);
             startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
+        } else {
+            Log.d(TAG, "init fail ");
         }
-
+        scanner = mBluetoothAdapter.getBluetoothLeScanner();
     }
 
     /*
@@ -171,12 +240,11 @@ public class MainActivity extends Activity implements View.OnClickListener {
     }
 
     /**
-     * @Title: scanLeDevice
-     * @Description: TODO(扫描蓝牙设备)
-     * @param enable
-     *            (扫描使能，true:扫描开始,false:扫描停止)
+     * @param enable (扫描使能，true:扫描开始,false:扫描停止)
      * @return void
      * @throws
+     * @Title: scanLeDevice
+     * @Description: TODO(扫描蓝牙设备)
      */
     private void scanLeDevice(final boolean enable) {
         if (enable) {
@@ -187,30 +255,31 @@ public class MainActivity extends Activity implements View.OnClickListener {
                     mScanning = false;
                     scan_flag = true;
                     scan_btn.setText("扫描设备");
-                    Log.i("bletrack", "stoping scanning");
+                    Log.i(TAG, "stoping scanning");
                     scanner.stopScan(mScanCallback);   // 停止扫描
                 }
             }, SCAN_PERIOD);
-			/* 开始扫描蓝牙设备，带mLeScanCallback 回调函数 */
-            Log.i("SCAN", "begin.....................");
+            /* 开始扫描蓝牙设备，带mLeScanCallback 回调函数 */
             mScanning = true;
             scan_flag = false;
             scan_btn.setText("停止扫描");
-            Log.i("bletrack", "begin scanning");
+            Log.i(TAG, "begin scanning");
             scanner.startScan(mScanCallback);  // 开始扫描Callback);5.0及之前的版本
         } else {
             mScanning = false;
-            Log.i("bletrack", "stoping scanning");
+            Log.i(TAG, "stoping scanning");
             scanner.stopScan(mScanCallback);   // 停止扫描
             scan_flag = true;
         }
 
     }
+
     private ScanCallback mScanCallback = new ScanCallback() {
         @Override
         public void onScanResult(int callbackType, final ScanResult result) {
             super.onScanResult(callbackType, result);
             final BluetoothDevice deviceScan = result.getDevice();
+            Log.d(TAG, "onScanResult: ");
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
@@ -229,13 +298,16 @@ public class MainActivity extends Activity implements View.OnClickListener {
         public void onScanFailed(int errorCode) {
             super.onScanFailed(errorCode);
             // 扫描失败，并且失败原因
-            Log.d("bletrack", "扫描失败" + String.valueOf(errorCode));
+            Log.d(TAG, "扫描失败" + String.valueOf(errorCode));
         }
     };
 
+    public void showToast(String string){
+        Toast.makeText(getApplication(), string,Toast.LENGTH_LONG).show();
+    }
     /**
-     * @Description: TODO<自定义适配器Adapter,作为listview的适配器>
      * @author 广州汇承信息科技有限公司
+     * @Description: TODO<自定义适配器Adapter,作为listview的适配器>
      * @data: 2014-10-12 上午10:46:30
      * @version: V1.0
      */
@@ -282,11 +354,9 @@ public class MainActivity extends Activity implements View.OnClickListener {
 
             return i;
         }
-
         /**
          * 重写getview
-         *
-         * **/
+         **/
         @Override
         public View getView(int i, View view, ViewGroup viewGroup) {
 
