@@ -18,7 +18,11 @@ import android.os.IBinder;
 import android.os.Message;
 import android.util.Log;
 import android.view.View;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.SeekBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -28,7 +32,7 @@ import java.util.List;
  * Created by Summer on 2017/10/16.
  */
 
-public class controlUI extends Activity implements View.OnClickListener {
+public class controlUI extends Activity implements View.OnClickListener,SeekBar.OnSeekBarChangeListener {
     private final static String TAG = Ble_Activity.class.getSimpleName();
     //蓝牙4.0的UUID,其中0000ffe1-0000-1000-8000-00805f9b34fb是广州汇承信息科技有限公司08蓝牙模块的UUID
     public static String HEART_RATE_MEASUREMENT = "0000ffe1-0000-1000-8000-00805f9b34fb";
@@ -37,15 +41,11 @@ public class controlUI extends Activity implements View.OnClickListener {
     public static String EXTRAS_DEVICE_RSSI = "RSSI";
     //蓝牙连接状态
     private boolean mConnected = false;
+    private boolean mFindService=false;
     private String status = "disconnected";
     //蓝牙地址
     private String mDeviceAddress;
     private Bundle b;
-    private WheelView wheelView_01, wheelView_02;
-    private TextView textView_01, textView_02;
-    private int[] dataSend1=new int[4];
-    private int[] dataSend2=new int[4];
-    private String rev_str = "";
     //蓝牙service,负责后台的蓝牙服务
     private static BluetoothLeService mBluetoothLeService;
     //文本框，显示接受的内容
@@ -54,6 +54,17 @@ public class controlUI extends Activity implements View.OnClickListener {
     //蓝牙特征值
     private static BluetoothGattCharacteristic target_chara = null;
     private Handler mhandler = new Handler();
+
+    private Button shoot;
+    private Button open;
+    private Button shut;
+    private TextView angle_text;
+    private SeekBar angle_bar;
+    private EditText angle_edit;
+    private TextView circle_angle;
+
+    private int circle=0;
+
     //	只是为了更新左上角的状态textview
     private Handler myHandler = new Handler() {
         // 2.重写消息处理函数
@@ -85,29 +96,6 @@ public class controlUI extends Activity implements View.OnClickListener {
         Intent gattServiceIntent = new Intent(this, BluetoothLeService.class);
         bindService(gattServiceIntent, mServiceConnection, BIND_AUTO_CREATE);
         init();
-
-        final Handler sendHandler = new Handler();
-        Runnable runnable = new Runnable() {
-            @Override
-            public void run() {
-                if(dataSend1[0]!=dataSend1[2]||dataSend1[1]!=dataSend1[3]){
-                    target_chara.setValue('a'+String.valueOf(dataSend1[0])+'b'+String.valueOf(dataSend1[1])+'\n');
-                    //调用蓝牙服务的写特征值方法实现发送数据
-                    mBluetoothLeService.writeCharacteristic(target_chara);
-                }
-                if(dataSend2[0]!=dataSend2[2]||dataSend2[1]!=dataSend2[3]){
-                    target_chara.setValue('c'+String.valueOf(dataSend2[0])+'d'+String.valueOf(dataSend2[1])+'\n');
-                    //调用蓝牙服务的写特征值方法实现发送数据
-                    mBluetoothLeService.writeCharacteristic(target_chara);
-                }
-                dataSend1[2]=dataSend1[0];
-                dataSend1[3]=dataSend1[1];
-                dataSend2[2]=dataSend2[0];
-                dataSend2[3]=dataSend2[1];
-                sendHandler.postDelayed(this, 20);
-            }
-        };
-        sendHandler.post(runnable);
 
     }
 
@@ -141,39 +129,27 @@ public class controlUI extends Activity implements View.OnClickListener {
      */
     private void init() {
         setContentView(R.layout.ctrui);
-        connect_state = (TextView) this.findViewById(R.id.connect_state_ctr);
+        connect_state = (TextView) this.findViewById(R.id.connect_state);
         connect_state.setText(status);
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);//强制为横屏
-        initView();
-    }
+        shoot=findViewById(R.id.shoot_gun);
+        open=findViewById(R.id.open);
+        shut=findViewById(R.id.shut);
+        angle_text=findViewById(R.id.angle_text);
+        angle_bar=(SeekBar) findViewById(R.id.progress_angle);
+        angle_edit=findViewById(R.id.edit_angle);
+        circle_angle=findViewById(R.id.angle_circle);
+        shoot.setOnClickListener(this);
+        open.setOnClickListener(this);
+        shut.setOnClickListener(this);
+        angle_bar.setOnSeekBarChangeListener(this);
+        angle_edit.setOnClickListener(this);
+        findViewById(R.id.circle_decrease).setOnClickListener(this);
+        findViewById(R.id.circle_increase).setOnClickListener(this);
+        findViewById(R.id.angle_decrease).setOnClickListener(this);
+        findViewById(R.id.angle_increase).setOnClickListener(this);
 
-    /**
-     * 初始化视图组件
-     */
-    private void initView() {
-        wheelView_01 = (WheelView) findViewById(R.id.wheelView_01);
-        textView_01 = (TextView) findViewById(R.id.textView_01);
-        wheelView_02 = (WheelView) findViewById(R.id.wheelView_02);
-        textView_02 = (TextView) findViewById(R.id.textView_02);
-
-        wheelView_01.setOnWheelViewMoveListener(
-                new WheelView.OnWheelViewMoveListener() {
-                    @Override
-                    public void onValueChanged(int angle, int distance) {
-                        textView_01.setText("角度：" + angle + "\n" + "距离：" + distance);
-                        dataSend1[0]=angle;
-                        dataSend1[1]=distance;
-                    }
-                }, 100L);
-        wheelView_02.setOnWheelViewMoveListener(
-                new WheelView.OnWheelViewMoveListener() {
-                    @Override
-                    public void onValueChanged(int angle, int distance) {
-                        textView_02.setText("角度：" + angle + "\n" + "距离：" + distance);
-                        dataSend2[0]=angle;
-                        dataSend2[1]=distance;
-                    }
-                }, 100L);
+        angle_bar.setMax(3600);
     }
 
     /* BluetoothLeService绑定的回调函数 */
@@ -220,6 +196,7 @@ public class controlUI extends Activity implements View.OnClickListener {
             } else if (BluetoothLeService.ACTION_GATT_DISCONNECTED//Gatt连接失败
                     .equals(action)) {
                 mConnected = false;
+                mFindService=false;
                 status = "disconnected";
                 //更新连接状态
                 updateConnectionState(status);
@@ -235,6 +212,7 @@ public class controlUI extends Activity implements View.OnClickListener {
                         .getSupportedGattServices());
                 System.out.println("BroadcastReceiver :"
                         + "device SERVICES_DISCOVERED");
+                mFindService=true;
             } else if (BluetoothLeService.ACTION_DATA_AVAILABLE.equals(action))//有效数据
             {
                 //处理发送过来的数据
@@ -362,17 +340,78 @@ public class controlUI extends Activity implements View.OnClickListener {
 
     }
 
+    private void sendString(String s){
+        if(!mFindService)
+            return;
+        target_chara.setValue(s);
+        //调用蓝牙服务的写特征值方法实现发送数据
+        mBluetoothLeService.writeCharacteristic(target_chara);
+    }
     /*
      * 发送按键的响应事件，主要发送文本框的数据
      */
     @Override
     public void onClick(View v) {
-        // TODO Auto-generated method stub
-        target_chara.setValue("123");
-        //调用蓝牙服务的写特征值方法实现发送数据
-        mBluetoothLeService.writeCharacteristic(target_chara);
+        String s="null";
+        switch (v.getId()){
+            case R.id.shut:
+                s="AT+shut\r\n";
+                sendString(s);
+                break;
+            case R.id.open:
+                s="AT+open\r\n";
+                sendString(s);
+                break;
+            case R.id.circle_decrease:
+                circle--;
+                s="圈数 "+String.valueOf(circle);
+                circle_angle.setText(s);
+                break;
+            case R.id.circle_increase:
+                circle++;
+                s="圈数 "+String.valueOf(circle);
+                circle_angle.setText(s);
+                break;
+            case R.id.angle_decrease:
+                angle_edit.setText(String.valueOf(Float.parseFloat(angle_edit.getText().toString())-0.5));
+                break;
+            case R.id.angle_increase:
+                angle_edit.setText(String.valueOf(Float.parseFloat(angle_edit.getText().toString())+0.5));
+                break;
+            case R.id.shoot_gun:
+                s="AT+S"+String.valueOf(Float.parseFloat(angle_edit.getText().toString())+circle*360)+"\r\n";
+                sendString(s);
+                break;
+        }
+    }
+    //    通过进度条去调试文本框
+    @Override
+    public void onProgressChanged(SeekBar seekBar, int progress,
+                                  boolean fromUser) {
+        switch (seekBar.getId()) {
+            case R.id.progress_angle:
+                angle_edit.setText(String.valueOf(progressToFloat(seekBar, progress)));
+                break;
+        }
+    }
+    private float progressToFloat(SeekBar seekBar, int val) {
+        switch (seekBar.getId()) {
+            case R.id.progress_angle:
+                return ((int)((val/10.f-180.f)*10))/10.f;
+            default:
+                Log.e("paramChange", "err progressToFloat");
+                return 0.0f;
+        }
+    }
+    @Override
+    public void onStartTrackingTouch(SeekBar seekBar) {
+
     }
 
+    @Override
+    public void onStopTrackingTouch(SeekBar seekBar) {
+
+    }
 }
 
 

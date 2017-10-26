@@ -1,16 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent" >
-<LinearLayout
-    android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:layout_alignParentTop="true"
     android:orientation="vertical">
     <LinearLayout
         android:layout_width="fill_parent"
-        android:layout_height="0dp"
-        android:layout_weight="2"
+        android:layout_height="wrap_content"
         android:orientation="horizontal">
         <TextView
             android:layout_width="wrap_content"
@@ -21,55 +18,108 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:id="@+id/connect_state_ctr"
-            android:text="123"
+            android:id="@+id/connect_state"
             />
-    </LinearLayout>
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="6"
-        android:orientation="horizontal" >
-
-        <com.example.action.remotectl.WheelView
-            android:id="@+id/wheelView_01"
-            android:layout_width="0dp"
-            android:layout_weight="1"
-            android:layout_margin="10dp"
-            android:layout_height="wrap_content" >
-        </com.example.action.remotectl.WheelView>
-        <com.example.action.remotectl.WheelView
-            android:id="@+id/wheelView_02"
-            android:layout_width="0dp"
-            android:layout_weight="1"
-            android:layout_margin="10dp"
-            android:layout_height="wrap_content" >
-        </com.example.action.remotectl.WheelView>
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="circle"
+            android:id="@+id/angle_circle"
+            />
 
     </LinearLayout>
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="2"
-        android:orientation="horizontal" >
+        android:layout_weight="1">
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:layout_weight="2">
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:orientation="horizontal">
+                <Button
+                    android:id="@+id/angle_decrease"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:text="angle-" />
+
+                <Button
+                    android:id="@+id/angle_increase"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:text="angle+" />
+            </LinearLayout>
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:orientation="horizontal">
+                <Button
+                    android:id="@+id/circle_decrease"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:text="circle-" />
+
+                <Button
+                    android:id="@+id/circle_increase"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:text="circle+" />
+            </LinearLayout>
+        </LinearLayout>
 
         <TextView
-            android:id="@+id/textView_01"
+            android:id="@+id/angle_text"
             android:layout_width="0dp"
+            android:layout_height="match_parent"
             android:layout_weight="1"
-            android:layout_height="wrap_content"
-            android:textAppearance="?android:attr/textAppearanceLarge" />
-        <TextView
-            android:id="@+id/textView_02"
-            android:layout_width="0dp"
-            android:layout_weight="1"
-            android:layout_height="wrap_content"
-            android:textAppearance="?android:attr/textAppearanceLarge" />
+            android:gravity="center"
+            android:text="转角" />
 
+        <EditText
+            android:id="@+id/edit_angle"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:inputType="numberSigned|numberDecimal"
+            android:textSize="17sp" />
+
+        <SeekBar
+            android:id="@+id/progress_angle"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="2" />
     </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+        <Button
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:id="@+id/open"
+            android:text="张开"/>
+        <Button
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:id="@+id/shut"
+            android:text="闭合"/>
+        <Button
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:id="@+id/shoot_gun"
+            android:text="发射"/>
+    </LinearLayout>
+
 </LinearLayout>
-
-
-</FrameLayout>
