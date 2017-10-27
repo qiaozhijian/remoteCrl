@@ -1,15 +1,18 @@
 package com.example.action.remotectl;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothGattDescriptor;
 import android.bluetooth.BluetoothGattService;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
+import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.graphics.Color;
 import android.os.Bundle;
@@ -54,15 +57,12 @@ public class controlUI extends Activity implements View.OnClickListener,SeekBar.
     //蓝牙特征值
     private static BluetoothGattCharacteristic target_chara = null;
     private Handler mhandler = new Handler();
-
-    private Button shoot;
-    private Button open;
-    private Button shut;
-    private TextView angle_text;
+    private AppData imdata ;
     private SeekBar angle_bar;
     private EditText angle_edit;
     private TextView circle_angle;
-
+    private SeekBar speed_bar;
+    private EditText edit_speed;
     private int circle=0;
 
     //	只是为了更新左上角的状态textview
@@ -91,7 +91,6 @@ public class controlUI extends Activity implements View.OnClickListener,SeekBar.
         b = getIntent().getExtras();
         //从意图获取显示的蓝牙信息
         mDeviceAddress = b.getString(EXTRAS_DEVICE_ADDRESS);
-
 		/* 启动蓝牙service */
         Intent gattServiceIntent = new Intent(this, BluetoothLeService.class);
         bindService(gattServiceIntent, mServiceConnection, BIND_AUTO_CREATE);
@@ -132,24 +131,32 @@ public class controlUI extends Activity implements View.OnClickListener,SeekBar.
         connect_state = (TextView) this.findViewById(R.id.connect_state);
         connect_state.setText(status);
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);//强制为横屏
-        shoot=findViewById(R.id.shoot_gun);
-        open=findViewById(R.id.open);
-        shut=findViewById(R.id.shut);
-        angle_text=findViewById(R.id.angle_text);
         angle_bar=(SeekBar) findViewById(R.id.progress_angle);
         angle_edit=findViewById(R.id.edit_angle);
         circle_angle=findViewById(R.id.angle_circle);
-        shoot.setOnClickListener(this);
-        open.setOnClickListener(this);
-        shut.setOnClickListener(this);
+        findViewById(R.id.shoot_gun).setOnClickListener(this);
+        findViewById(R.id.open).setOnClickListener(this);
+        findViewById(R.id.shut).setOnClickListener(this);
         angle_bar.setOnSeekBarChangeListener(this);
         angle_edit.setOnClickListener(this);
+        speed_bar=findViewById(R.id.progress_speed);
+        edit_speed=findViewById(R.id.edit_speed);
         findViewById(R.id.circle_decrease).setOnClickListener(this);
         findViewById(R.id.circle_increase).setOnClickListener(this);
         findViewById(R.id.angle_decrease).setOnClickListener(this);
         findViewById(R.id.angle_increase).setOnClickListener(this);
-
+        findViewById(R.id.speed_decrease).setOnClickListener(this);
+        findViewById(R.id.speed_increase).setOnClickListener(this);
+        findViewById(R.id.speed_change).setOnClickListener(this);
+        speed_bar.setOnSeekBarChangeListener(this);
         angle_bar.setMax(3600);
+        speed_bar.setMax(300000);
+        imdata = new AppData(controlUI.this);
+        edit_speed.setText(String.valueOf(imdata.getSettingSPEED()));
+        speed_bar.setProgress((int)(imdata.getSettingSPEED()));
+        circle_angle.setText(String.valueOf(imdata.getSettingCIRCLE()));
+        angle_edit.setText(String.valueOf(imdata.getSettingANGLE()));
+        angle_bar.setProgress((int)(imdata.getSettingANGLE()));
     }
 
     /* BluetoothLeService绑定的回调函数 */
@@ -378,8 +385,30 @@ public class controlUI extends Activity implements View.OnClickListener,SeekBar.
             case R.id.angle_increase:
                 angle_edit.setText(String.valueOf(Float.parseFloat(angle_edit.getText().toString())+0.5));
                 break;
+            case R.id.speed_decrease:
+                edit_speed.setText(String.valueOf(Float.parseFloat(edit_speed.getText().toString())-10000));
+                break;
+            case R.id.speed_increase:
+                edit_speed.setText(String.valueOf(Float.parseFloat(edit_speed.getText().toString())+10000));
+                break;
             case R.id.shoot_gun:
-                s="AT+S"+String.valueOf(Float.parseFloat(angle_edit.getText().toString())+circle*360)+"\r\n";
+                AlertDialog.Builder dialog1 = new AlertDialog.Builder(controlUI.this);
+                dialog1.setTitle("射吗？");
+                dialog1.setPositiveButton("确定", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                        imdata.setSettingANGLE(Float.parseFloat(angle_edit.getText().toString()));
+                        imdata.setSettingCIRCLE(circle);
+                        String s;
+                        s="AT+S"+String.valueOf(imdata.getSettingANGLE()+imdata.getSettingCIRCLE()*360)+"\r\n";
+                        sendString(s);
+                    }
+                });
+                dialog1.show();
+                break;
+            case R.id.speed_change:
+                imdata.setSettingSPEED(Float.parseFloat(edit_speed.getText().toString()));
+                s="AT+V"+String.valueOf(imdata.getSettingSPEED())+"\r\n";
                 sendString(s);
                 break;
         }
@@ -392,12 +421,16 @@ public class controlUI extends Activity implements View.OnClickListener,SeekBar.
             case R.id.progress_angle:
                 angle_edit.setText(String.valueOf(progressToFloat(seekBar, progress)));
                 break;
+            case R.id.progress_speed:
+                edit_speed.setText(String.valueOf(progressToFloat(seekBar, progress)));
         }
     }
     private float progressToFloat(SeekBar seekBar, int val) {
         switch (seekBar.getId()) {
             case R.id.progress_angle:
                 return ((int)((val/10.f-180.f)*10))/10.f;
+            case R.id.progress_speed:
+                return val;
             default:
                 Log.e("paramChange", "err progressToFloat");
                 return 0.0f;
