@@ -53,17 +53,24 @@ public class controlUI extends Activity implements View.OnClickListener,SeekBar.
     private static BluetoothLeService mBluetoothLeService;
     //文本框，显示接受的内容
     private TextView connect_state;
+    private TextView circle_angle;
+    private int circle=0;
     private ArrayList<ArrayList<BluetoothGattCharacteristic>> mGattCharacteristics = new ArrayList<ArrayList<BluetoothGattCharacteristic>>();
     //蓝牙特征值
     private static BluetoothGattCharacteristic target_chara = null;
     private Handler mhandler = new Handler();
     private AppData imdata ;
     private SeekBar angle_bar;
-    private EditText angle_edit;
-    private TextView circle_angle;
     private SeekBar speed_bar;
+    private EditText angle_edit;
     private EditText edit_speed;
-    private int circle=0;
+
+    /*操控走行界面*/
+    private TextView textView_01, textView_02;
+    private WheelView wheelView_01, wheelView_02;
+    private int[] dataSend1=new int[4];
+    private int[] dataSend2=new int[4];
+    private EditText walk_edit_speed;
 
     //	只是为了更新左上角的状态textview
     private Handler myHandler = new Handler() {
@@ -86,16 +93,28 @@ public class controlUI extends Activity implements View.OnClickListener,SeekBar.
     protected void onCreate(Bundle savedInstanceState) {
         // TODO Auto-generated method stub
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.ctrui);
-//		获得上一个activity的消息
-        b = getIntent().getExtras();
-        //从意图获取显示的蓝牙信息
-        mDeviceAddress = b.getString(EXTRAS_DEVICE_ADDRESS);
-		/* 启动蓝牙service */
-        Intent gattServiceIntent = new Intent(this, BluetoothLeService.class);
-        bindService(gattServiceIntent, mServiceConnection, BIND_AUTO_CREATE);
         init();
-
+        blueInit();
+        final Handler sendHandler = new Handler();
+        Runnable runnable = new Runnable() {
+            @Override
+            public void run() {
+                if(dataSend1[0]!=dataSend1[2]||dataSend1[1]!=dataSend1[3]){
+                    String s='a'+String.valueOf(dataSend1[0])+'b'+String.valueOf(dataSend1[1])+"\r\n";
+                    sendString(s);
+                }
+                if(dataSend2[0]!=dataSend2[2]||dataSend2[1]!=dataSend2[3]){
+                    String s='c'+String.valueOf(dataSend1[0])+'d'+String.valueOf(dataSend1[1])+"\r\n";
+                    sendString(s);
+                }
+                dataSend1[2]=dataSend1[0];
+                dataSend1[3]=dataSend1[1];
+                dataSend2[2]=dataSend2[0];
+                dataSend2[3]=dataSend2[1];
+                sendHandler.postDelayed(this, 20);
+            }
+        };
+        sendHandler.post(runnable);
     }
 
     @Override
@@ -118,7 +137,17 @@ public class controlUI extends Activity implements View.OnClickListener,SeekBar.
             Log.d(TAG, "Connect request result=" + result);
         }
     }
-
+    void blueInit()
+    {
+        //		获得上一个activity的消息
+        b = getIntent().getExtras();
+        //从意图获取显示的蓝牙信息
+        mDeviceAddress = b.getString(EXTRAS_DEVICE_ADDRESS);
+		/* 启动蓝牙service */
+        Intent gattServiceIntent = new Intent(this, BluetoothLeService.class);
+        bindService(gattServiceIntent, mServiceConnection, BIND_AUTO_CREATE);
+        initView();
+    }
     /**
      * @param
      * @return void
@@ -128,19 +157,19 @@ public class controlUI extends Activity implements View.OnClickListener,SeekBar.
      */
     private void init() {
         setContentView(R.layout.ctrui);
-        connect_state = (TextView) this.findViewById(R.id.connect_state);
-        connect_state.setText(status);
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);//强制为横屏
+        connect_state = (TextView) this.findViewById(R.id.connect_state);
         angle_bar=(SeekBar) findViewById(R.id.progress_angle);
         angle_edit=findViewById(R.id.edit_angle);
         circle_angle=findViewById(R.id.angle_circle);
+        speed_bar=findViewById(R.id.progress_speed);
+        edit_speed=findViewById(R.id.edit_speed);
+        walk_edit_speed=(EditText) findViewById(R.id.walk_edit_speed);
         findViewById(R.id.shoot_gun).setOnClickListener(this);
         findViewById(R.id.open).setOnClickListener(this);
         findViewById(R.id.shut).setOnClickListener(this);
         angle_bar.setOnSeekBarChangeListener(this);
         angle_edit.setOnClickListener(this);
-        speed_bar=findViewById(R.id.progress_speed);
-        edit_speed=findViewById(R.id.edit_speed);
         findViewById(R.id.circle_decrease).setOnClickListener(this);
         findViewById(R.id.circle_increase).setOnClickListener(this);
         findViewById(R.id.angle_decrease).setOnClickListener(this);
@@ -148,17 +177,49 @@ public class controlUI extends Activity implements View.OnClickListener,SeekBar.
         findViewById(R.id.speed_decrease).setOnClickListener(this);
         findViewById(R.id.speed_increase).setOnClickListener(this);
         findViewById(R.id.speed_change).setOnClickListener(this);
+        findViewById(R.id.walk_speed_decrease).setOnClickListener(this);
+        findViewById(R.id.walk_speed_increase).setOnClickListener(this);
+        findViewById(R.id.walk_speed_change).setOnClickListener(this);
         speed_bar.setOnSeekBarChangeListener(this);
         angle_bar.setMax(3600);
         speed_bar.setMax(300000);
+        connect_state.setText(status);
         imdata = new AppData(controlUI.this);
         edit_speed.setText(String.valueOf(imdata.getSettingSPEED()));
+        walk_edit_speed.setText(String.valueOf(1000));
         speed_bar.setProgress((int)(imdata.getSettingSPEED()));
         circle_angle.setText(String.valueOf(imdata.getSettingCIRCLE()));
         angle_edit.setText(String.valueOf(imdata.getSettingANGLE()));
         angle_bar.setProgress((int)(imdata.getSettingANGLE()));
     }
+    /**
+     * 初始化视图组件
+     */
+    private void initView() {
+        wheelView_01 = (WheelView) findViewById(R.id.wheelView_01);
+        textView_01 = (TextView) findViewById(R.id.textView_01);
+        wheelView_02 = (WheelView) findViewById(R.id.wheelView_02);
+        textView_02 = (TextView) findViewById(R.id.textView_02);
 
+        wheelView_01.setOnWheelViewMoveListener(
+                new WheelView.OnWheelViewMoveListener() {
+                    @Override
+                    public void onValueChanged(int angle, int distance) {
+                        textView_01.setText("角度：" + angle + "\t" + "距离：" + distance);
+                        dataSend1[0]=angle;
+                        dataSend1[1]=distance;
+                    }
+                }, 100L);
+        wheelView_02.setOnWheelViewMoveListener(
+                new WheelView.OnWheelViewMoveListener() {
+                    @Override
+                    public void onValueChanged(int angle, int distance) {
+                        textView_02.setText("角度：" + angle + "\t" + "距离：" + distance);
+                        dataSend2[0]=angle;
+                        dataSend2[1]=distance;
+                    }
+                }, 100L);
+    }
     /* BluetoothLeService绑定的回调函数 */
     private final ServiceConnection mServiceConnection = new ServiceConnection() {
 
@@ -409,6 +470,16 @@ public class controlUI extends Activity implements View.OnClickListener,SeekBar.
             case R.id.speed_change:
                 imdata.setSettingSPEED(Float.parseFloat(edit_speed.getText().toString()));
                 s="AT+V"+String.valueOf(imdata.getSettingSPEED())+"\r\n";
+                sendString(s);
+                break;
+            case R.id.walk_speed_decrease:
+                walk_edit_speed.setText(String.valueOf(Float.parseFloat(walk_edit_speed.getText().toString())-1000));
+                break;
+            case R.id.walk_speed_increase:
+                walk_edit_speed.setText(String.valueOf(Float.parseFloat(walk_edit_speed.getText().toString())+1000));
+                break;
+            case R.id.walk_speed_change:
+                s="AT+W"+String.valueOf(Float.parseFloat(walk_edit_speed.getText().toString()))+"\r\n";
                 sendString(s);
                 break;
         }
