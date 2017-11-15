@@ -29,6 +29,8 @@
         <activity
             android:name=".controlUI"
             android:screenOrientation="landscape"></activity>
+        <activity
+            android:name=".SurfaceViewActivity3"></activity>
         <service android:name="BluetoothLeService" android:enabled="true"></service>
     </application>
 

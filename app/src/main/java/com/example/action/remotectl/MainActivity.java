@@ -95,7 +95,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
                 if (device == null)
                     return;
                 final Intent intent = new Intent(MainActivity.this,
-                        controlUI.class);
+                        SurfaceViewActivity3.class);
 //                传递信息
                 intent.putExtra(controlUI.EXTRAS_DEVICE_NAME, device.getName());
                 intent.putExtra(controlUI.EXTRAS_DEVICE_ADDRESS, device.getAddress());
