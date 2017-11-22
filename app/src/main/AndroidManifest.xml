@@ -27,7 +27,7 @@
             android:name=".Ble_Activity"
             android:screenOrientation="landscape"></activity>
         <activity
-            android:name=".controlUI"
+            android:name=".manualControl"
             android:screenOrientation="landscape"></activity>
         <service android:name="BluetoothLeService" android:enabled="true"></service>
     </application>
