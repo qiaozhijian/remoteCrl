@@ -74,12 +74,18 @@ public class MainActivity extends Activity implements View.OnClickListener {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
         init();
+
         init_ble();
+
         locationInit();
+
         scan_flag = true;
+
         // 自定义适配器
         mleDeviceListAdapter = new LeDeviceListAdapter();
+
         // 为listview指定适配器
         lv.setAdapter(mleDeviceListAdapter);
 
@@ -210,7 +216,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
         // 获取手机本地的蓝牙适配器
         final BluetoothManager bluetoothManager = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
         mBluetoothAdapter = bluetoothManager.getAdapter();
-        // 打开蓝牙权限
+        // 如果返回适配器为空，并且不能被使能
         if (mBluetoothAdapter == null || !mBluetoothAdapter.isEnabled()) {
             Intent enableBtIntent = new Intent(
                     BluetoothAdapter.ACTION_REQUEST_ENABLE);
@@ -227,7 +233,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
     @Override
     public void onClick(View v) {
         // TODO Auto-generated method stub
-
+//这次点击的目的是扫描
         if (scan_flag) {
             mleDeviceListAdapter = new LeDeviceListAdapter();
             lv.setAdapter(mleDeviceListAdapter);
