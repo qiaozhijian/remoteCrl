@@ -8,57 +8,33 @@ import android.util.Log;
  */
 
 public class AppData {
-    private String KEY_SETTING_SPEED = "key_setting_SPEED";
-    private String KEY_SETTING_ANGLE = "key_setting_ANGLE";
-    private String KEY_SETTING_CIRCLE = "key_setting_CIRCLE";
-    private String KEY_SETTING_TESTENV = "key_setting_testenv";
+    private String KEY_SETTING_STEER = "key_setting_STEER";
+    private String KEY_SETTING_PITCH = "key_setting_PITCH";
 
     //在这里进行扩展，加入键，然后自动生成getter和setter函数，就达到了扩展的目的
     public AppData(Context context) {
         SharedPreferencesHelper.init(context);
     }
 
-    public void setSettingSPEED(float bFlag) {
+    public void setSettingSTEER(float bFlag) {
         SharedPreferencesHelper.getInstance().saveData(
-                KEY_SETTING_SPEED, bFlag);
+                KEY_SETTING_STEER, bFlag);
     }
 
-    public float getSettingSPEED() {
+    public float getSettingSTEER() {
         return (float) SharedPreferencesHelper.getInstance().getData(
-                KEY_SETTING_SPEED, 1.2f);
+                KEY_SETTING_STEER, 1.2f);
     }
 
-    public void setSettingANGLE(float bFlag) {
+    public void setSettingPITCH(float bFlag) {
 
         SharedPreferencesHelper.getInstance()
-                .saveData(KEY_SETTING_ANGLE, bFlag);
+                .saveData(KEY_SETTING_PITCH, bFlag);
     }
 
-    public float getSettingANGLE() {
+    public float getSettingPITCH() {
         return (float) SharedPreferencesHelper.getInstance().getData(
-                KEY_SETTING_ANGLE, 1.2f);
+                KEY_SETTING_PITCH, 1.2f);
     }
 
-
-    public void setSettingCIRCLE(float bFlag) {
-
-        SharedPreferencesHelper.getInstance().saveData(KEY_SETTING_CIRCLE,
-                bFlag);
-    }
-
-    public float getSettingCIRCLE() {
-        return (float) SharedPreferencesHelper.getInstance().getData(
-                KEY_SETTING_CIRCLE, 1.2f);
-    }
-
-    public void setTestEnvSetting(boolean bFlag) {
-        Log.d("imdata", "set testenv:" + bFlag);
-        SharedPreferencesHelper.getInstance().saveData(KEY_SETTING_TESTENV,
-                bFlag);
-    }
-
-    public boolean getTestEnvSetting() {
-        return (Boolean) SharedPreferencesHelper.getInstance().getData(
-                KEY_SETTING_TESTENV, false);
-    }
 }

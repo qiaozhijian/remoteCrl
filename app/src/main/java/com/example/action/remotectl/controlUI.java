@@ -19,7 +19,9 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
+import android.support.annotation.IntegerRes;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -60,17 +62,12 @@ public class controlUI extends Activity implements View.OnClickListener,SeekBar.
     private static BluetoothGattCharacteristic target_chara = null;
     private Handler mhandler = new Handler();
     private AppData imdata ;
-    private SeekBar angle_bar;
-    private SeekBar speed_bar;
-    private EditText angle_edit;
-    private EditText edit_speed;
 
-    /*操控走行界面*/
-    private TextView textView_01, textView_02;
-    private WheelView wheelView_01, wheelView_02;
-    private int[] dataSend1=new int[4];
-    private int[] dataSend2=new int[4];
-    private EditText walk_edit_speed;
+    private SeekBar steering_bar;
+    private SeekBar pitch_bar;
+    private EditText angle_edit;
+    private EditText pitch_edit;
+
 
     //	只是为了更新左上角的状态textview
     private Handler myHandler = new Handler() {
@@ -95,26 +92,6 @@ public class controlUI extends Activity implements View.OnClickListener,SeekBar.
         super.onCreate(savedInstanceState);
         init();
         blueInit();
-        final Handler sendHandler = new Handler();
-        Runnable runnable = new Runnable() {
-            @Override
-            public void run() {
-                if(dataSend1[0]!=dataSend1[2]||dataSend1[1]!=dataSend1[3]){
-                    String s='a'+String.valueOf(dataSend1[0])+'b'+String.valueOf(dataSend1[1])+"\r\n";
-                    sendString(s);
-                }
-                if(dataSend2[0]!=dataSend2[2]||dataSend2[1]!=dataSend2[3]){
-                    String s='c'+String.valueOf(dataSend1[0])+'d'+String.valueOf(dataSend1[1])+"\r\n";
-                    sendString(s);
-                }
-                dataSend1[2]=dataSend1[0];
-                dataSend1[3]=dataSend1[1];
-                dataSend2[2]=dataSend2[0];
-                dataSend2[3]=dataSend2[1];
-                sendHandler.postDelayed(this, 20);
-            }
-        };
-        sendHandler.post(runnable);
     }
 
     @Override
@@ -146,7 +123,6 @@ public class controlUI extends Activity implements View.OnClickListener,SeekBar.
 		/* 启动蓝牙service */
         Intent gattServiceIntent = new Intent(this, BluetoothLeService.class);
         bindService(gattServiceIntent, mServiceConnection, BIND_AUTO_CREATE);
-        initView();
     }
     /**
      * @param
@@ -159,66 +135,35 @@ public class controlUI extends Activity implements View.OnClickListener,SeekBar.
         setContentView(R.layout.ctrui);
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);//强制为横屏
         connect_state = (TextView) this.findViewById(R.id.connect_state);
-        angle_bar=(SeekBar) findViewById(R.id.progress_angle);
-        angle_edit=findViewById(R.id.edit_angle);
-        circle_angle=findViewById(R.id.angle_circle);
-        speed_bar=findViewById(R.id.progress_speed);
-        edit_speed=findViewById(R.id.edit_speed);
-        walk_edit_speed=(EditText) findViewById(R.id.walk_edit_speed);
-        findViewById(R.id.shoot_gun).setOnClickListener(this);
+        angle_edit=findViewById(R.id.angle_edit);
+        pitch_edit=findViewById(R.id.edit_pitch);
+
+        steering_bar=(SeekBar) findViewById(R.id.steering_bar);
+        steering_bar.setOnSeekBarChangeListener(this);
+        steering_bar.setMax(2200);
+
+        pitch_bar=(SeekBar)findViewById(R.id.pitch_angle);
+        pitch_bar.setOnSeekBarChangeListener(this);
+        pitch_bar.setMax(600);
+
         findViewById(R.id.open).setOnClickListener(this);
         findViewById(R.id.shut).setOnClickListener(this);
-        angle_bar.setOnSeekBarChangeListener(this);
-        angle_edit.setOnClickListener(this);
-        findViewById(R.id.circle_decrease).setOnClickListener(this);
-        findViewById(R.id.circle_increase).setOnClickListener(this);
-        findViewById(R.id.angle_decrease).setOnClickListener(this);
-        findViewById(R.id.angle_increase).setOnClickListener(this);
-        findViewById(R.id.speed_decrease).setOnClickListener(this);
-        findViewById(R.id.speed_increase).setOnClickListener(this);
-        findViewById(R.id.speed_change).setOnClickListener(this);
-        findViewById(R.id.walk_speed_decrease).setOnClickListener(this);
-        findViewById(R.id.walk_speed_increase).setOnClickListener(this);
-        findViewById(R.id.walk_speed_change).setOnClickListener(this);
-        speed_bar.setOnSeekBarChangeListener(this);
-        angle_bar.setMax(3600);
-        speed_bar.setMax(300000);
-        connect_state.setText(status);
-        imdata = new AppData(controlUI.this);
-        edit_speed.setText(String.valueOf(imdata.getSettingSPEED()));
-        walk_edit_speed.setText(String.valueOf(1000));
-        speed_bar.setProgress((int)(imdata.getSettingSPEED()));
-        circle_angle.setText(String.valueOf(imdata.getSettingCIRCLE()));
-        angle_edit.setText(String.valueOf(imdata.getSettingANGLE()));
-        angle_bar.setProgress((int)(imdata.getSettingANGLE()));
-    }
-    /**
-     * 初始化视图组件
-     */
-    private void initView() {
-        wheelView_01 = (WheelView) findViewById(R.id.wheelView_01);
-        textView_01 = (TextView) findViewById(R.id.textView_01);
-        wheelView_02 = (WheelView) findViewById(R.id.wheelView_02);
-        textView_02 = (TextView) findViewById(R.id.textView_02);
+        findViewById(R.id.shoot_gun).setOnClickListener(this);
+        findViewById(R.id.shoot_reset).setOnClickListener(this);
+        findViewById(R.id.steer_decrease).setOnClickListener(this);
+        findViewById(R.id.steer_increase).setOnClickListener(this);
+        findViewById(R.id.pitch_decrease).setOnClickListener(this);
+        findViewById(R.id.pitch_increase).setOnClickListener(this);
+        findViewById(R.id.steer_change).setOnClickListener(this);
+        findViewById(R.id.pitch_change).setOnClickListener(this);
 
-        wheelView_01.setOnWheelViewMoveListener(
-                new WheelView.OnWheelViewMoveListener() {
-                    @Override
-                    public void onValueChanged(int angle, int distance) {
-                        textView_01.setText("角度：" + angle + "\t" + "距离：" + distance);
-                        dataSend1[0]=angle;
-                        dataSend1[1]=distance;
-                    }
-                }, 100L);
-        wheelView_02.setOnWheelViewMoveListener(
-                new WheelView.OnWheelViewMoveListener() {
-                    @Override
-                    public void onValueChanged(int angle, int distance) {
-                        textView_02.setText("角度：" + angle + "\t" + "距离：" + distance);
-                        dataSend2[0]=angle;
-                        dataSend2[1]=distance;
-                    }
-                }, 100L);
+        connect_state.setText(status);
+
+        imdata = new AppData(controlUI.this);
+        steering_bar.setProgress((int)(imdata.getSettingSTEER()));
+        angle_edit.setText(String.valueOf(imdata.getSettingSTEER()));
+        pitch_bar.setProgress((int)(imdata.getSettingPITCH()));
+        pitch_edit.setText(String.valueOf(imdata.getSettingPITCH()));
     }
     /* BluetoothLeService绑定的回调函数 */
     private final ServiceConnection mServiceConnection = new ServiceConnection() {
@@ -408,6 +353,26 @@ public class controlUI extends Activity implements View.OnClickListener,SeekBar.
 
     }
 
+    private class ToastRunnable implements Runnable {
+        String mText;
+        boolean mway;
+
+        public ToastRunnable(String text, boolean way) {
+            mText = text;
+            mway = way;
+        }
+
+        @Override
+        public void run() {
+            if (mway)
+                Toast.makeText(getApplicationContext(), mText, Toast.LENGTH_SHORT).show();
+            else {
+                Toast toast = Toast.makeText(getApplicationContext(), mText, Toast.LENGTH_LONG);
+                toast.setGravity(Gravity.CENTER, 0, 0);
+                toast.show();
+            }
+        }
+    }
     private void sendString(String s){
         if(!mFindService)
             return;
@@ -415,6 +380,11 @@ public class controlUI extends Activity implements View.OnClickListener,SeekBar.
         //调用蓝牙服务的写特征值方法实现发送数据
         mBluetoothLeService.writeCharacteristic(target_chara);
     }
+    int getIntegerCst(@IntegerRes int id)
+    {
+        return getResources().getInteger(id);
+    }
+    Handler handler=new Handler();
     /*
      * 发送按键的响应事件，主要发送文本框的数据
      */
@@ -423,34 +393,42 @@ public class controlUI extends Activity implements View.OnClickListener,SeekBar.
         String s="null";
         switch (v.getId()){
             case R.id.shut:
-                s="AT+shut\r\n";
+                s="AT+"+String.valueOf(getIntegerCst(R.integer.claw_cst))+String.valueOf(1)+"\r\n";
                 sendString(s);
+                handler.post(new ToastRunnable("爪子闭合",true));
                 break;
             case R.id.open:
-                s="AT+open\r\n";
+                s="AT+"+String.valueOf(getIntegerCst(R.integer.claw_cst))+String.valueOf(0)+"\r\n";
                 sendString(s);
+                handler.post(new ToastRunnable("爪子打开",true));
                 break;
-            case R.id.circle_decrease:
-                circle--;
-                s="圈数 "+String.valueOf(circle);
-                circle_angle.setText(s);
-                break;
-            case R.id.circle_increase:
-                circle++;
-                s="圈数 "+String.valueOf(circle);
-                circle_angle.setText(s);
-                break;
-            case R.id.angle_decrease:
+            case R.id.steer_decrease:
                 angle_edit.setText(String.valueOf(Float.parseFloat(angle_edit.getText().toString())-0.5));
+                handler.post(new ToastRunnable("舵机顺时针偏",true));
                 break;
-            case R.id.angle_increase:
+            case R.id.steer_increase:
                 angle_edit.setText(String.valueOf(Float.parseFloat(angle_edit.getText().toString())+0.5));
+                handler.post(new ToastRunnable("舵机逆时针偏",true));
                 break;
-            case R.id.speed_decrease:
-                edit_speed.setText(String.valueOf(Float.parseFloat(edit_speed.getText().toString())-10000));
+            case R.id.pitch_decrease:
+                pitch_edit.setText(String.valueOf(Float.parseFloat(pitch_edit.getText().toString())-0.5));
+                handler.post(new ToastRunnable("向下转",true));
                 break;
-            case R.id.speed_increase:
-                edit_speed.setText(String.valueOf(Float.parseFloat(edit_speed.getText().toString())+10000));
+            case R.id.pitch_increase:
+                pitch_edit.setText(String.valueOf(Float.parseFloat(pitch_edit.getText().toString())+0.5));
+                handler.post(new ToastRunnable("向上转",true));
+                break;
+            case R.id.pitch_change:
+                imdata.setSettingPITCH(Float.parseFloat(pitch_edit.getText().toString()));
+                s="AT+"+String.valueOf(getIntegerCst(R.integer.pitch_cst))+String.valueOf(imdata.getSettingPITCH())+"\r\n";
+                sendString(s);
+                handler.post(new ToastRunnable("改变吧！赐予我力量！",true));
+                break;
+            case R.id.steer_change:
+                imdata.setSettingSTEER(Float.parseFloat(angle_edit.getText().toString()));
+                s="AT+"+String.valueOf(getIntegerCst(R.integer.steer_cst))+String.valueOf(imdata.getSettingSTEER())+"\r\n";
+                sendString(s);
+                handler.post(new ToastRunnable("改变吧！赐予我力量！",true));
                 break;
             case R.id.shoot_gun:
                 AlertDialog.Builder dialog1 = new AlertDialog.Builder(controlUI.this);
@@ -458,29 +436,18 @@ public class controlUI extends Activity implements View.OnClickListener,SeekBar.
                 dialog1.setPositiveButton("确定", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialogInterface, int i) {
-                        imdata.setSettingANGLE(Float.parseFloat(angle_edit.getText().toString()));
-                        imdata.setSettingCIRCLE(circle);
                         String s;
-                        s="AT+S"+String.valueOf(imdata.getSettingANGLE()+imdata.getSettingCIRCLE()*360)+"\r\n";
+                        s="AT+"+String.valueOf(getIntegerCst(R.integer.shoot_cst))+String.valueOf(1)+"\r\n";
                         sendString(s);
+                        handler.post(new ToastRunnable("射吧！就在此发！",true));
                     }
                 });
                 dialog1.show();
                 break;
-            case R.id.speed_change:
-                imdata.setSettingSPEED(Float.parseFloat(edit_speed.getText().toString()));
-                s="AT+V"+String.valueOf(imdata.getSettingSPEED())+"\r\n";
+            case R.id.shoot_reset:
+                s="AT+"+String.valueOf(getIntegerCst(R.integer.shoot_cst))+String.valueOf(0)+"\r\n";
                 sendString(s);
-                break;
-            case R.id.walk_speed_decrease:
-                walk_edit_speed.setText(String.valueOf(Float.parseFloat(walk_edit_speed.getText().toString())-1000));
-                break;
-            case R.id.walk_speed_increase:
-                walk_edit_speed.setText(String.valueOf(Float.parseFloat(walk_edit_speed.getText().toString())+1000));
-                break;
-            case R.id.walk_speed_change:
-                s="AT+W"+String.valueOf(Float.parseFloat(walk_edit_speed.getText().toString()))+"\r\n";
-                sendString(s);
+                handler.post(new ToastRunnable("先休息一会......",true));
                 break;
         }
     }
@@ -489,19 +456,19 @@ public class controlUI extends Activity implements View.OnClickListener,SeekBar.
     public void onProgressChanged(SeekBar seekBar, int progress,
                                   boolean fromUser) {
         switch (seekBar.getId()) {
-            case R.id.progress_angle:
+            case R.id.steering_bar:
                 angle_edit.setText(String.valueOf(progressToFloat(seekBar, progress)));
                 break;
-            case R.id.progress_speed:
-                edit_speed.setText(String.valueOf(progressToFloat(seekBar, progress)));
+            case R.id.pitch_angle:
+                pitch_edit.setText(String.valueOf(progressToFloat(seekBar, progress)));
         }
     }
     private float progressToFloat(SeekBar seekBar, int val) {
         switch (seekBar.getId()) {
-            case R.id.progress_angle:
-                return ((int)((val/10.f-180.f)*10))/10.f;
-            case R.id.progress_speed:
-                return val;
+            case R.id.steering_bar:
+                return ((int)((val/10.f-110.f)*10))/10.f;
+            case R.id.pitch_angle:
+                return ((int)((val/10.f)*10))/10.f;
             default:
                 Log.e("paramChange", "err progressToFloat");
                 return 0.0f;
