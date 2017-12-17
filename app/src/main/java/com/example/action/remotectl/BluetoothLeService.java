@@ -56,6 +56,7 @@ public class BluetoothLeService extends Service {
     public final static String ACTION_GATT_DISCONNECTED = "com.example.bluetooth.le.ACTION_GATT_DISCONNECTED";
     public final static String ACTION_GATT_SERVICES_DISCOVERED = "com.example.bluetooth.le.ACTION_GATT_SERVICES_DISCOVERED";
     public final static String ACTION_DATA_AVAILABLE = "com.example.bluetooth.le.ACTION_DATA_AVAILABLE";
+    public final static String ACTION_DATA_READ_AVAILABLE = "com.example.bluetooth.le.ACTION_DATA_READ_AVAILABLE";
     public final static String EXTRA_DATA = "com.example.bluetooth.le.EXTRA_DATA";
 
 /*
@@ -64,7 +65,7 @@ public class BluetoothLeService extends Service {
 * onServicesDiscovered 	 	ACTION_GATT_SERVICES_DISCOVERED
 * onCharacteristicRead 	 	ACTION_DATA_AVAILABLE
 * onCharacteristicChanged 	ACTION_DATA_AVAILABLE
-* onCharacteristicWrite 	ACTION_DATA_AVAILABLE
+* onCharacteristicWrite 	ACTION_DATA_READ_AVAILABLE
 * onReadRemoteRssi   	 	ACTION_DATA_AVAILABLE
 * */
 
@@ -123,7 +124,7 @@ public class BluetoothLeService extends Service {
                 byte[] sucString = characteristic.getValue();
                 String string = new String(sucString);
                 //将数据通过广播到Ble_Activity
-                broadcastUpdate(ACTION_DATA_AVAILABLE, characteristic);
+                broadcastUpdate(ACTION_DATA_READ_AVAILABLE, characteristic);
             }
 
         }
@@ -135,8 +136,7 @@ public class BluetoothLeService extends Service {
         public void onCharacteristicChanged(BluetoothGatt gatt,
                                             BluetoothGattCharacteristic characteristic) {
             System.out.println("++++++++++++++++");
-            broadcastUpdate(ACTION_DATA_AVAILABLE, characteristic);
-
+            broadcastUpdate(ACTION_DATA_READ_AVAILABLE, characteristic);
         }
 
         /*
@@ -149,6 +149,7 @@ public class BluetoothLeService extends Service {
             Log.w(TAG, "--onCharacteristicWrite--: " + status);
             // 以下语句实现 发送完数据或也显示到界面上
             broadcastUpdate(ACTION_DATA_AVAILABLE, characteristic);
+            //Log.d("bletrack",new String(characteristic.getValue()));
         }
 
         /*

@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-<integer name="claw_cst">1</integer>
-<integer name="shoot_cst">2</integer>
-<integer name="pitch_cst">3</integer>
-<integer name="steer_cst">4</integer>
+    <integer name="claw_cst">1</integer>
+    <integer name="shoot_cst">2</integer>
+    <integer name="pitch_cst">3</integer>
+    <integer name="steer_cst">4</integer>
+    <integer name="gas_cst">5</integer>
 </resources>

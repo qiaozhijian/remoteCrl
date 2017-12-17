@@ -38,7 +38,7 @@ import java.util.List;
  */
 
 public class controlUI extends Activity implements View.OnClickListener,SeekBar.OnSeekBarChangeListener {
-    private final static String TAG = Ble_Activity.class.getSimpleName();
+    private final static String TAG = controlUI.class.getSimpleName();
     //蓝牙4.0的UUID,其中0000ffe1-0000-1000-8000-00805f9b34fb是广州汇承信息科技有限公司08蓝牙模块的UUID
     public static String HEART_RATE_MEASUREMENT = "0000ffe1-0000-1000-8000-00805f9b34fb";
     public static String EXTRAS_DEVICE_NAME = "DEVICE_NAME";
@@ -55,8 +55,7 @@ public class controlUI extends Activity implements View.OnClickListener,SeekBar.
     private static BluetoothLeService mBluetoothLeService;
     //文本框，显示接受的内容
     private TextView connect_state;
-    private TextView circle_angle;
-    private int circle=0;
+    private TextView gas_value;
     private ArrayList<ArrayList<BluetoothGattCharacteristic>> mGattCharacteristics = new ArrayList<ArrayList<BluetoothGattCharacteristic>>();
     //蓝牙特征值
     private static BluetoothGattCharacteristic target_chara = null;
@@ -65,8 +64,10 @@ public class controlUI extends Activity implements View.OnClickListener,SeekBar.
 
     private SeekBar steering_bar;
     private SeekBar pitch_bar;
+    private SeekBar gas_bar;
     private EditText angle_edit;
-    private EditText pitch_edit;
+    private EditText pitch_edit;;
+    private EditText gas_edit;
 
 
     //	只是为了更新左上角的状态textview
@@ -135,8 +136,10 @@ public class controlUI extends Activity implements View.OnClickListener,SeekBar.
         setContentView(R.layout.ctrui);
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);//强制为横屏
         connect_state = (TextView) this.findViewById(R.id.connect_state);
+        gas_value=(TextView)findViewById(R.id.gas_value); 
         angle_edit=findViewById(R.id.angle_edit);
         pitch_edit=findViewById(R.id.edit_pitch);
+        gas_edit=findViewById(R.id.gas_edit);
 
         steering_bar=(SeekBar) findViewById(R.id.steering_bar);
         steering_bar.setOnSeekBarChangeListener(this);
@@ -145,6 +148,10 @@ public class controlUI extends Activity implements View.OnClickListener,SeekBar.
         pitch_bar=(SeekBar)findViewById(R.id.pitch_angle);
         pitch_bar.setOnSeekBarChangeListener(this);
         pitch_bar.setMax(600);
+
+        gas_bar=(SeekBar)findViewById(R.id.gas_bar);
+        gas_bar.setOnSeekBarChangeListener(this);
+        gas_bar.setMax(10);
 
         findViewById(R.id.open).setOnClickListener(this);
         findViewById(R.id.shut).setOnClickListener(this);
@@ -156,6 +163,9 @@ public class controlUI extends Activity implements View.OnClickListener,SeekBar.
         findViewById(R.id.pitch_increase).setOnClickListener(this);
         findViewById(R.id.steer_change).setOnClickListener(this);
         findViewById(R.id.pitch_change).setOnClickListener(this);
+        findViewById(R.id.gas_decrease).setOnClickListener(this);
+        findViewById(R.id.gas_increase).setOnClickListener(this);
+        findViewById(R.id.gas_change).setOnClickListener(this);
 
         connect_state.setText(status);
 
@@ -164,6 +174,8 @@ public class controlUI extends Activity implements View.OnClickListener,SeekBar.
         angle_edit.setText(String.valueOf(imdata.getSettingSTEER()));
         pitch_bar.setProgress((int)(imdata.getSettingPITCH()));
         pitch_edit.setText(String.valueOf(imdata.getSettingPITCH()));
+        gas_bar.setProgress((int)(imdata.getSettingGAS()));
+        gas_edit.setText(String.valueOf(imdata.getSettingGAS()));
     }
     /* BluetoothLeService绑定的回调函数 */
     private final ServiceConnection mServiceConnection = new ServiceConnection() {
@@ -226,11 +238,17 @@ public class controlUI extends Activity implements View.OnClickListener,SeekBar.
                 System.out.println("BroadcastReceiver :"
                         + "device SERVICES_DISCOVERED");
                 mFindService=true;
-            } else if (BluetoothLeService.ACTION_DATA_AVAILABLE.equals(action))//有效数据
+            } else if (BluetoothLeService.ACTION_DATA_READ_AVAILABLE.equals(action))//有效数据
             {
-                //处理发送过来的数据
-//                displayData(intent.getExtras().getString(
-//                        BluetoothLeService.EXTRA_DATA));
+                String aim="AT+5";
+                String msg=new String();
+                msg=intent.getExtras().getString(BluetoothLeService.EXTRA_DATA);
+                if(msg.length()>=4) {
+                    Log.d("bletrack", msg.substring(0, 4));
+                    if (msg.substring(0, 4).equals(aim)) {
+                        gas_value.setText(msg.substring(4));
+                    }
+                }
             }
         }
     };
@@ -253,9 +271,9 @@ public class controlUI extends Activity implements View.OnClickListener,SeekBar.
         final IntentFilter intentFilter = new IntentFilter();
         intentFilter.addAction(BluetoothLeService.ACTION_GATT_CONNECTED);
         intentFilter.addAction(BluetoothLeService.ACTION_GATT_DISCONNECTED);
-        intentFilter
-                .addAction(BluetoothLeService.ACTION_GATT_SERVICES_DISCOVERED);
+        intentFilter.addAction(BluetoothLeService.ACTION_GATT_SERVICES_DISCOVERED);
         intentFilter.addAction(BluetoothLeService.ACTION_DATA_AVAILABLE);
+        intentFilter.addAction(BluetoothLeService.ACTION_DATA_READ_AVAILABLE);
         return intentFilter;
     }
 
@@ -367,7 +385,7 @@ public class controlUI extends Activity implements View.OnClickListener,SeekBar.
             if (mway)
                 Toast.makeText(getApplicationContext(), mText, Toast.LENGTH_SHORT).show();
             else {
-                Toast toast = Toast.makeText(getApplicationContext(), mText, Toast.LENGTH_LONG);
+                Toast toast = Toast.makeText(getApplicationContext(), mText, Toast.LENGTH_SHORT);
                 toast.setGravity(Gravity.CENTER, 0, 0);
                 toast.show();
             }
@@ -424,6 +442,20 @@ public class controlUI extends Activity implements View.OnClickListener,SeekBar.
                 sendString(s);
                 handler.post(new ToastRunnable("改变吧！赐予我力量！",true));
                 break;
+            case R.id.gas_decrease:
+                gas_edit.setText(String.valueOf(Float.parseFloat(gas_edit.getText().toString())-0.05));
+                handler.post(new ToastRunnable("大家注意，我要放气了",true));
+                break;
+            case R.id.gas_increase:
+                gas_edit.setText(String.valueOf(Float.parseFloat(gas_edit.getText().toString())+0.05));
+                handler.post(new ToastRunnable("先储存一会，等会再放",true));
+                break;
+            case R.id.gas_change:
+                imdata.setSettingGAS(Float.parseFloat(gas_edit.getText().toString()));
+                s="AT+"+String.valueOf(getIntegerCst(R.integer.gas_cst))+String.valueOf(imdata.getSettingGAS())+"\r\n";
+                sendString(s);
+                handler.post(new ToastRunnable("改变吧！赐予我力量！",true));
+                break;
             case R.id.steer_change:
                 imdata.setSettingSTEER(Float.parseFloat(angle_edit.getText().toString()));
                 s="AT+"+String.valueOf(getIntegerCst(R.integer.steer_cst))+String.valueOf(imdata.getSettingSTEER())+"\r\n";
@@ -461,6 +493,10 @@ public class controlUI extends Activity implements View.OnClickListener,SeekBar.
                 break;
             case R.id.pitch_angle:
                 pitch_edit.setText(String.valueOf(progressToFloat(seekBar, progress)));
+                break;
+            case R.id.gas_bar:
+                gas_edit.setText(String.valueOf(progressToFloat(seekBar, progress)));
+                break;
         }
     }
     private float progressToFloat(SeekBar seekBar, int val) {
@@ -468,6 +504,8 @@ public class controlUI extends Activity implements View.OnClickListener,SeekBar.
             case R.id.steering_bar:
                 return ((int)((val/10.f-110.f)*10))/10.f;
             case R.id.pitch_angle:
+                return ((int)((val/10.f)*10))/10.f;
+            case R.id.gas_bar:
                 return ((int)((val/10.f)*10))/10.f;
             default:
                 Log.e("paramChange", "err progressToFloat");

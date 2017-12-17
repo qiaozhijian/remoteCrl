@@ -24,9 +24,6 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".Ble_Activity"
-            android:screenOrientation="landscape"></activity>
-        <activity
             android:name=".controlUI"
             android:screenOrientation="landscape"></activity>
         <service android:name="BluetoothLeService" android:enabled="true"></service>
