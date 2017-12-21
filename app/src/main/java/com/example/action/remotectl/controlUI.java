@@ -443,11 +443,11 @@ public class controlUI extends Activity implements View.OnClickListener,SeekBar.
                 handler.post(new ToastRunnable("改变吧！赐予我力量！",true));
                 break;
             case R.id.gas_decrease:
-                gas_edit.setText(String.valueOf(Float.parseFloat(gas_edit.getText().toString())-0.05));
+                gas_edit.setText(String.valueOf(Float.parseFloat(gas_edit.getText().toString())-0.01));
                 handler.post(new ToastRunnable("大家注意，我要放气了",true));
                 break;
             case R.id.gas_increase:
-                gas_edit.setText(String.valueOf(Float.parseFloat(gas_edit.getText().toString())+0.05));
+                gas_edit.setText(String.valueOf(Float.parseFloat(gas_edit.getText().toString())+0.01));
                 handler.post(new ToastRunnable("先储存一会，等会再放",true));
                 break;
             case R.id.gas_change:
@@ -504,9 +504,9 @@ public class controlUI extends Activity implements View.OnClickListener,SeekBar.
             case R.id.steering_bar:
                 return ((int)((val/10.f-110.f)*10))/10.f;
             case R.id.pitch_angle:
-                return ((int)((val/10.f)*10))/10.f;
+                return ((int)((val/100.f)*100))/10.f;
             case R.id.gas_bar:
-                return ((int)((val/10.f)*10))/10.f;
+                return ((int)((val/100.f)*100))/10.f;
             default:
                 Log.e("paramChange", "err progressToFloat");
                 return 0.0f;
